@@ -4,4 +4,4 @@ module main;
 			$display("Hello, World!");
 			$finish;
 		end
-endmodule
+endmodule	

@@ -1,12 +1,12 @@
 //32-bit ALU
 //Venkat Kuruturi
-module ALU (in_A, in_B, alu_mode, out, carry_in, carry_out, enable,zero_flag);
+module ALU (in_A, in_B, mode, out, carry_in, carry_out, enable,zero_flag);
 	parameter WIDTH = 32;	//bus width
 	
 //INPUT PORTS
 	input [WIDTH-1:0] in_A;	//input from register A
 	input [WIDTH-1:0] in_B;	//input from register B
-	input [2:0] alu_mode;	//ALU operation mode
+	input [2:0] mode;	//ALU operation mode
 /*
 	ALU MODE DESCRIPTION 	( Y = output, A = input A, B = input B, Cin = carry in, Cout = carry out)
 	M2	M1	M0		Operation	Description
@@ -23,58 +23,68 @@ module ALU (in_A, in_B, alu_mode, out, carry_in, carry_out, enable,zero_flag);
 	input carry_in;			//Carry in
 
 //OUTPUT PORTS
-	output carry_out;		//Carry out from ALU
-	output [WIDTH-1:0] out;	//output of ALU
-	output zero_flag;		//zero flag.  set if output = 0
+	output reg carry_out;		//Carry out from ALU
+	output reg [WIDTH-1:0] out;	//output of ALU
+	output reg zero_flag;		//zero flag.  set if output = 0
 
-	wire [WIDTH-1] temp;
+	reg [WIDTH-1:0] temp;
+	reg [WIDTH:0] add_tmp;
 //CODE
-	if(~enable) begin
-		//AND OPERATION
-		if(mode == 0) begin
-			assign carry_out = carry_in;
-			assign out = in_A & in_B;
+	always @(*) begin
+		if(enable == 0) begin
+			//AND OPERATION
+			case(mode)
+				0: begin
+					carry_out = carry_in;
+					out = in_A & in_B;
+				end
+				//OR OPERATION		
+				1: begin
+					carry_out = carry_in;
+					out = in_A | in_B;
+				end
+				//XOR OPERATION
+				2: begin
+					carry_out = carry_in;
+					out = in_A ^ in_B;
+				end
+				//SHCL OPERATION
+				3: begin
+					 carry_out = in_A[31];
+					 out = in_A << 1;
+					 out[0] = carry_in;
+				end
+				//SHCR OPERATION
+				4: begin
+					 carry_out = in_A[0];
+					 out = in_A >> 1;
+					 out[31] = carry_in;
+				end
+				//NOT OPERATION
+				5: begin
+					 carry_out = carry_in;
+					 out = ~in_A;
+				end
+				//ADD/SUB OPERATION
+				default: begin
+					//negate B if necessary
+					if (mode == 6) begin
+						temp = -in_B;
+					end
+					else begin
+						 temp = in_B;
+					end
+					//add A and temp, temp = B|-B
+					add_tmp = in_A + in_B;  
+	  				out = add_tmp[WIDTH-1:0];  
+	  				carry_out  = add_tmp[WIDTH]; 
+				end
+			endcase
 		end
-		//OR OPERATION		
-		else if(mode == 1) begin
-			assign carry_out = carry_in;
-			assign out = in_A | in_B;
+		if (out == 0) begin
+			zero_flag = 1;
 		end
-		//XOR OPERATION
-		else if (mode == 2) begin
-			assign carry_out = carry_in;
-			assign out = in_A ^ in_B;
-		end
-		//SHCL OPERATION
-		else if (mode == 3) begin
-			assign carry_out = in_A[31];
-			assign out = in_A << 1;
-			assign out[0] = carry_in;
-		end
-		//SHCR OPERATION
-		else if (mode == 4) begin
-			assign carry_out <= in_A[0];
-			assign out <= in_A >> 1;
-			assign out[31] <= carry_in;
-		end
-		//NOT OPERATION
-		else if (mode == 5) begin
-			assign carry _out = carry_in;
-			assign out = ~in_A;
-		end
-		//ADD/SUB OPERATION
-		else begin
-			//negate B if necessary
-			if (mode == 6) begin
-				negate neg(temp,in_B);
-			end
-			else begin
-				assign temp = in_B;
-			end
-			//add A and temp, temp = B|-B
-			adder_32bit add(in_A,temp,out,carry_out);
-		end
+		else begin zero_flag = 0; end
 	end
-
 endmodule //32 bit ALU
 

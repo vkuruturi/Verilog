@@ -1,4 +1,4 @@
-//32-bit ALU
+//32-bit ALU Behavioral design
 //Venkat Kuruturi
 module ALU (in_A, in_B, mode, out, carry_in, carry_out, enable,zero_flag);
 	parameter WIDTH = 32;	//bus width

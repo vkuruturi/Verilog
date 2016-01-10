@@ -11,10 +11,8 @@ module counter(out, clk, reset);
   always @(posedge clk)
     out <= out + 1;
 
-  always @reset
+  always @(reset)
     if (reset)
-      assign out = 0;
-    else
-      deassign out;
+      out = 0;
 
 endmodule // counter
